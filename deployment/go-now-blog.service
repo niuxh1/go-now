@@ -1,0 +1,23 @@
+[Unit]
+Description=GoNow Blog Backend Service
+After=network.target mysql.service
+
+[Service]
+# 请修改为实际的用户名 (例如 root 或 ubuntu)
+User=root
+# 请修改为二进制文件所在的实际路径
+WorkingDirectory=/var/www/go-now-blog/backend
+ExecStart=/var/www/go-now-blog/backend/go-now-blog-backend
+# 如果服务器配置较低，可以限制内存
+# MemoryLimit=500M
+
+# 环境变量 (生产环境数据库连接)
+# 格式: user:password@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local
+Environment="DSN=root:YOUR_DB_PASSWORD@tcp(127.0.0.1:3306)/go_now_blog?charset=utf8mb4&parseTime=True&loc=Local"
+Environment="GIN_MODE=release"
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
