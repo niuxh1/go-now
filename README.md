@@ -1,45 +1,119 @@
-# Neon Ink Blog (霓虹·墨)
+# GoNow Blog
 
-这是一个基于 Vue 3 和 Go (Gin) 的前后端分离博客项目，融合了赛博朋克与中国传统美学风格。
+![GoNow Blog](https://img.shields.io/badge/Go-1.24-00ADD8?logo=go)
+![Vue](https://img.shields.io/badge/Vue.js-3.0-4FC08D?logo=vue.js)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?logo=mysql)
+![TailwindCSS](https://img.shields.io/badge/Tailwind-3.0-38B2AC?logo=tailwindcss)
 
-## 项目结构
+## 📖 项目介绍
 
-- `frontend/`: Vue 3 + Vite 前端项目
-- `backend/`: Go + Gin 后端项目
+**GoNow Blog** 是一个为开发者设计的全栈博客系统。它不仅提供了极简的阅读体验，还集成了强大的管理功能。
 
-## 快速开始
+### 核心价值
+- **极速性能**：后端 Go 语言高并发支持，前端 Vite 秒级启动。
+- **创作自由**：支持沉浸式 Markdown 创作，自动同步文件系统。
+- **深度定制**：管理员可在页面直接修改站点属性，实时生效。
+- **互动友好**：无缝的评论流，支持匿名与实名评论。
 
-### 1. 启动后端 (Backend)
+---
 
-确保你已经安装了 Go 1.18+。
+## 🛠️ 本地开发指南
 
-```bash
-cd backend
-go mod tidy
-go run main.go
+### 前置要求
+- **Go**: 1.22+
+- **Node.js**: 18+
+- **MySQL**: 8.0+
+
+### 1. 数据库准备
+```sql
+CREATE DATABASE go_now_blog CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
+在 `backend/DataBase/db.go` 中修改 DSN 连库配置。
 
-后端服务将在 `http://localhost:8080` 启动。
+### 2. 启动服务
+- **后端**: `cd backend && go run main.go`
+- **前端**: `cd frontend && npm install && npm run dev`
 
-### 2. 启动前端 (Frontend)
+---
 
-确保你已经安装了 Node.js (推荐 v16+)。
+## 🚀 Linux 服务器部署流程
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+本指南假设您使用的是 Ubuntu/Debian/CentOS 系统。
 
-前端服务将在 `http://localhost:5173` 启动。
+### 1. 环境准备
+安装 Nginx, MySQL, Go 和 Node.js 环境。
 
-## 设计理念
+### 2. 后端部署 (Systemd)
+1.  **编译程序**:
+    ```bash
+    cd backend
+    go build -o gonow-server main.go
+    ```
+2.  **创建服务文件**: `sudo nano /etc/systemd/system/gonow-blog.service`
+    ```ini
+    [Unit]
+    Description=GoNow Blog Backend
+    After=network.target mysql.service
 
-- **视觉风格**: 深色背景 (`#0a0a0c`) 搭配霓虹青 (`#00f3ff`) 与品红 (`#ff0055`)，点缀以玉石绿 (`#00ff9d`)。
-- **排版**: 结合现代无衬线字体与传统衬线字体（如楷体）的韵味。
-- **交互**: 极简的卡片式布局，带有微交互动画。
+    [Service]
+    Type=simple
+    User=root
+    WorkingDirectory=/var/www/go-now-blog/backend
+    ExecStart=/var/www/go-now-blog/backend/gonow-server
+    Restart=on-failure
 
-## 技术栈
+    [Install]
+    WantedBy=multi-user.target
+    ```
+3.  **启动后端**:
+    ```bash
+    sudo systemctl daemon-reload
+    sudo systemctl enable gonow-blog
+    sudo systemctl start gonow-blog
+    ```
 
-- **Frontend**: Vue 3, Vite, Axios, Lucide Icons
-- **Backend**: Go, Gin, CORS Middleware
+### 3. 前端部署 (Nginx)
+1.  **打包前端**:
+    ```bash
+    cd frontend
+    npm install
+    npm run build
+    ```
+2.  **配置 Nginx**: `sudo nano /etc/nginx/sites-available/gonow-blog`
+    ```nginx
+    server {
+        listen 80;
+        server_name your_domain.com;
+
+        # 前端静态文件
+        location / {
+            root /var/www/go-now-blog/frontend/dist;
+            index index.html;
+            try_files $uri $uri/ /index.html;
+        }
+
+        # 后端接口代理
+        location /api {
+            proxy_pass http://localhost:8080;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+    }
+    ```
+3.  **生效配置**:
+    ```bash
+    sudo ln -s /etc/nginx/sites-available/gonow-blog /etc/nginx/sites-enabled/
+    sudo nginx -t
+    sudo systemctl restart nginx
+    ```
+
+---
+
+## 📝 运维须知
+
+-   **日志查看**: `journalctl -u gonow-blog -f`
+-   **初次登录**: 后端程序首次启动时会在控制台输出 `admin` 账户的随机初始密码，请及时修改。
+-   **文件同步**: 文章会自动同步在 `backend/posts` 目录下，您可以直接通过 Git 提交 Markdown 文件来实现“GitOps”式的文章发布。
+
+## 📄 开源协议
+MIT License
